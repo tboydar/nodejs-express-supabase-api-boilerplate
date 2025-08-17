@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Application
+  api:
+    build: .
+    container_name: ecommerce_api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecommerce_db
+      NODE_ENV: development
+      PORT: 3000
+      JWT_SECRET: dev-jwt-secret-change-in-production
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: pnpm dev
+
+volumes:
+  postgres_data:

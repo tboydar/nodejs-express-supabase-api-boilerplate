@@ -169,6 +169,89 @@ const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }));
 
+// Supported languages table
+const supportedLanguages = pgTable('supported_languages', {
+  code: varchar('code', { length: 10 }).primaryKey(),
+  name: varchar('name', { length: 50 }).notNull(),
+  nativeName: varchar('native_name', { length: 50 }).notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+// Product translations table
+const productTranslations = pgTable('product_translations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  languageCode: varchar('language_code', { length: 10 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  metaTitle: varchar('meta_title', { length: 200 }),
+  metaDescription: text('meta_description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  productLanguageUnique: unique('product_translations_product_language_unique').on(table.productId, table.languageCode),
+  productIdx: index('idx_product_translations_product_id').on(table.productId),
+  languageIdx: index('idx_product_translations_language_code').on(table.languageCode),
+}));
+
+// Category translations table
+const categoryTranslations = pgTable('category_translations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  categoryId: uuid('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+  languageCode: varchar('language_code', { length: 10 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  metaTitle: varchar('meta_title', { length: 200 }),
+  metaDescription: text('meta_description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  categoryLanguageUnique: unique('category_translations_category_language_unique').on(table.categoryId, table.languageCode),
+  categoryIdx: index('idx_category_translations_category_id').on(table.categoryId),
+  languageIdx: index('idx_category_translations_language_code').on(table.languageCode),
+}));
+
+// Define additional relations
+const productTranslationsRelations = relations(productTranslations, ({ one }) => ({
+  product: one(products, {
+    fields: [productTranslations.productId],
+    references: [products.id],
+  }),
+  language: one(supportedLanguages, {
+    fields: [productTranslations.languageCode],
+    references: [supportedLanguages.code],
+  }),
+}));
+
+const categoryTranslationsRelations = relations(categoryTranslations, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryTranslations.categoryId],
+    references: [categories.id],
+  }),
+  language: one(supportedLanguages, {
+    fields: [categoryTranslations.languageCode],
+    references: [supportedLanguages.code],
+  }),
+}));
+
+// Update existing relations to include translations
+const productsRelationsUpdated = relations(products, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+  cartItems: many(cartItems),
+  orderItems: many(orderItems),
+  translations: many(productTranslations),
+}));
+
+const categoriesRelationsUpdated = relations(categories, ({ many }) => ({
+  products: many(products),
+  translations: many(categoryTranslations),
+}));
+
 module.exports = {
   categories,
   products,
@@ -176,11 +259,16 @@ module.exports = {
   cartItems,
   orders,
   orderItems,
+  supportedLanguages,
+  productTranslations,
+  categoryTranslations,
   // Relations
-  categoriesRelations,
-  productsRelations,
+  categoriesRelations: categoriesRelationsUpdated,
+  productsRelations: productsRelationsUpdated,
   profilesRelations,
   cartItemsRelations,
   ordersRelations,
   orderItemsRelations,
+  productTranslationsRelations,
+  categoryTranslationsRelations,
 };

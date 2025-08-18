@@ -1,0 +1,134 @@
+<header class="header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold" href="<%= getLocalizedUrl('/') %>">
+                <i class="bi bi-shop"></i>
+                <%= __('site.title') %>
+            </a>
+            
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navigation Menu -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= getLocalizedUrl('/') %>">
+                            <i class="bi bi-house"></i>
+                            <%= __('navigation.home') %>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= getLocalizedUrl('/products') %>">
+                            <i class="bi bi-grid"></i>
+                            <%= __('navigation.products') %>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= getLocalizedUrl('/categories') %>">
+                            <i class="bi bi-tags"></i>
+                            <%= __('navigation.categories') %>
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Search Form -->
+                <form class="d-flex me-3" role="search" id="search-form">
+                    <div class="input-group">
+                        <input class="form-control" type="search" 
+                               placeholder="<%= __('products.search_placeholder') %>" 
+                               name="q" id="search-input">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- User Menu -->
+                <ul class="navbar-nav">
+                    <!-- Shopping Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="<%= getLocalizedUrl('/cart') %>" id="cart-link">
+                            <i class="bi bi-cart3"></i>
+                            <%= __('navigation.cart') %>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  id="cart-count" style="display: none;">
+                                0
+                            </span>
+                        </a>
+                    </li>
+                    
+                    <!-- User Authentication -->
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <!-- Logged In User -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i>
+                                <%= user.email || __('navigation.profile') %>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="<%= getLocalizedUrl('/profile') %>">
+                                        <i class="bi bi-person"></i>
+                                        <%= __('navigation.profile') %>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="<%= getLocalizedUrl('/orders') %>">
+                                        <i class="bi bi-list-ul"></i>
+                                        <%= __('navigation.orders') %>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="<%= getLocalizedUrl('/auth/logout') %>">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <%= __('navigation.logout') %>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    <% } else { %>
+                        <!-- Not Logged In -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="<%= getLocalizedUrl('/auth/login') %>">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <%= __('navigation.login') %>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<%= getLocalizedUrl('/auth/register') %>">
+                                <i class="bi bi-person-plus"></i>
+                                <%= __('navigation.register') %>
+                            </a>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Breadcrumb (if provided) -->
+    <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length > 0) { %>
+        <div class="container">
+            <nav aria-label="breadcrumb" class="py-2">
+                <ol class="breadcrumb mb-0">
+                    <% breadcrumbs.forEach((crumb, index) => { %>
+                        <% if (index === breadcrumbs.length - 1) { %>
+                            <li class="breadcrumb-item active" aria-current="page">
+                                <%= crumb.title %>
+                            </li>
+                        <% } else { %>
+                            <li class="breadcrumb-item">
+                                <a href="<%= crumb.url %>"><%= crumb.title %></a>
+                            </li>
+                        <% } %>
+                    <% }) %>
+                </ol>
+            </nav>
+        </div>
+    <% } %>
+</header>

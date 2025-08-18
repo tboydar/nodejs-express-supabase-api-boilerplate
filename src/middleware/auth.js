@@ -1,127 +1,180 @@
-const jwt = require('jsonwebtoken');
-const { supabase } = require('../config/supabase');
-const { AppError, asyncHandler } = require('./errorHandler');
-const config = require('../config');
+const JWTUtils = require('../utils/jwt');
+const UserModel = require('../models/users');
 
-const authenticate = asyncHandler(async (req, res, next) => {
-  let token;
-
-  // Check for token in headers
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
-    return next(new AppError('Not authorized to access this route', 401));
-  }
-
+// Authentication middleware
+const authenticate = async (req, res, next) => {
   try {
-    // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const authHeader = req.headers.authorization;
     
-    if (error || !user) {
-      return next(new AppError('Not authorized to access this route', 401));
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        message: 'Authorization header is missing'
+      });
     }
-
-    // Attach user to request object
+    
+    const token = JWTUtils.extractTokenFromHeader(authHeader);
+    const decoded = JWTUtils.verifyAccessToken(token);
+    
+    // Get user details from database
+    const user = await UserModel.findById(decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not found',
+        message: 'The user associated with this token no longer exists'
+      });
+    }
+    
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        error: 'Account disabled',
+        message: 'Your account has been disabled'
+      });
+    }
+    
+    // Attach user info to request
     req.user = user;
+    req.token = token;
     
-    // Get user profile if available
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      req.userProfile = profile;
-    } catch (profileError) {
-      // Profile might not exist yet, that's okay
-      req.userProfile = null;
-    }
-
     next();
   } catch (error) {
-    return next(new AppError('Not authorized to access this route', 401));
+    console.error('Authentication error:', error);
+    
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid token',
+      message: error.message
+    });
   }
-});
+};
 
+// Optional authentication middleware (doesn't fail if no token)
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader) {
+      return next();
+    }
+    
+    const token = JWTUtils.extractTokenFromHeader(authHeader);
+    const decoded = JWTUtils.verifyAccessToken(token);
+    
+    // Get user details from database
+    const user = await UserModel.findById(decoded.userId);
+    
+    if (user && user.isActive) {
+      req.user = user;
+      req.token = token;
+    }
+    
+    next();
+  } catch (error) {
+    // Don't fail on invalid token for optional auth
+    next();
+  }
+};
+
+// Authorization middleware factory
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.userProfile) {
-      return next(new AppError('User profile not found. Please complete your profile.', 403));
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+        message: 'Please authenticate to access this resource'
+      });
     }
-
-    if (!roles.includes(req.userProfile.role)) {
-      return next(new AppError('Not authorized to access this route', 403));
+    
+    if (roles.length === 0) {
+      return next();
     }
-
+    
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Insufficient permissions',
+        message: `Access denied. Required role: ${roles.join(' or ')}, your role: ${req.user.role}`
+      });
+    }
+    
     next();
   };
 };
 
-const optionalAuth = asyncHandler(async (req, res, next) => {
-  let token;
+// Check if user is admin
+const requireAdmin = authorize('admin');
 
-  // Check for token in headers
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+// Check if user is admin or manager
+const requireManager = authorize('admin', 'manager');
 
-  if (token) {
-    try {
-      // Verify token with Supabase
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      
-      if (!error && user) {
-        req.user = user;
-        
-        // Get user profile if available
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          req.userProfile = profile;
-        } catch (profileError) {
-          req.userProfile = null;
-        }
-      }
-    } catch (error) {
-      // Token is invalid, but we continue without authentication
+// Check if user owns the resource or is admin
+const requireOwnershipOrAdmin = (getResourceUserId) => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
     }
-  }
+    
+    // Admin can access any resource
+    if (req.user.role === 'admin') {
+      return next();
+    }
+    
+    try {
+      const resourceUserId = await getResourceUserId(req);
+      
+      if (req.user.id === resourceUserId) {
+        return next();
+      }
+      
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied',
+        message: 'You can only access your own resources'
+      });
+    } catch (error) {
+      console.error('Ownership check error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Authorization check failed'
+      });
+    }
+  };
+};
 
+// Email verification required middleware
+const requireEmailVerification = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required'
+    });
+  }
+  
+  if (!req.user.isEmailVerified) {
+    return res.status(403).json({
+      success: false,
+      error: 'Email verification required',
+      message: 'Please verify your email address to access this resource'
+    });
+  }
+  
   next();
-});
-
-// Alternative JWT-based authentication (for non-Supabase scenarios)
-const authenticateJWT = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
-    return next(new AppError('Not authorized to access this route', 401));
-  }
-
-  try {
-    const decoded = jwt.verify(token, config.jwtSecret);
-    req.user = { id: decoded.sub, email: decoded.email };
-    req.userProfile = decoded.profile || null;
-    next();
-  } catch (error) {
-    return next(new AppError('Not authorized to access this route', 401));
-  }
-});
+};
 
 module.exports = {
   authenticate,
-  authorize,
   optionalAuth,
-  authenticateJWT,
+  authorize,
+  requireAdmin,
+  requireManager,
+  requireOwnershipOrAdmin,
+  requireEmailVerification
 };

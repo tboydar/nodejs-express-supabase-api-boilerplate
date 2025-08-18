@@ -227,6 +227,24 @@ class ProductModel {
     return this.findMany({ ...options, categoryId });
   }
   
+  // Count products by category
+  static async countByCategory(categoryId, options = {}) {
+    let whereConditions = [eq(products.categoryId, categoryId)];
+    
+    if (options.isActive !== undefined) {
+      whereConditions.push(eq(products.isActive, options.isActive));
+    }
+    
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    
+    const result = await db
+      .select({ count: count() })
+      .from(products)
+      .where(whereClause);
+    
+    return result[0]?.count || 0;
+  }
+  
   // Get low stock products
   static async findLowStock(threshold = 10) {
     const result = await db

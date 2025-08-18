@@ -1,0 +1,39 @@
+<div class="language-switcher bg-light border-bottom">
+    <div class="container">
+        <div class="row align-items-center py-2">
+            <div class="col-auto">
+                <small class="text-muted">
+                    <i class="bi bi-globe"></i>
+                    <%= __('language.switch') %>:
+                </small>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm" role="group">
+                    <% supportedLanguages.forEach(lang => { %>
+                        <% 
+                            const isActive = lang.code === locale;
+                            const currentPath = req.path.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, '') || '/';
+                            const langUrl = getLocalizedUrl(currentPath, lang.code);
+                        %>
+                        <a href="<%= langUrl %>" 
+                           class="btn <%= isActive ? 'btn-primary' : 'btn-outline-primary' %>"
+                           <% if (isActive) { %>aria-current="true"<% } %>
+                           title="<%= __('language.' + lang.code) %>">
+                            <span class="flag-icon">
+                                <% if (lang.code === 'en') { %>🇺🇸<% } %>
+                                <% if (lang.code === 'zh-TW') { %>🇹🇼<% } %>
+                                <% if (lang.code === 'de') { %>🇩🇪<% } %>
+                            </span>
+                            <%= lang.nativeName %>
+                        </a>
+                    <% }) %>
+                </div>
+            </div>
+            <div class="col text-end">
+                <small class="text-muted">
+                    <%= __('language.current') %>: <%= currentLanguage?.nativeName %>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>

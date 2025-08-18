@@ -1,0 +1,171 @@
+{
+  "site": {
+    "title": "E-Commerce Demo",
+    "description": "Eine moderne E-Commerce-Plattform mit Node.js und Express",
+    "welcome": "Willkommen in unserem Shop"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "products": "Produkte",
+    "categories": "Kategorien",
+    "cart": "Warenkorb",
+    "orders": "Bestellungen",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "profile": "Profil",
+    "logout": "Abmelden"
+  },
+  "language": {
+    "current": "Deutsch",
+    "switch": "Sprache",
+    "en": "English",
+    "zh-TW": "繁體中文",
+    "de": "Deutsch"
+  },
+  "home": {
+    "title": "Willkommen bei E-Commerce Demo",
+    "subtitle": "Entdecken Sie erstaunliche Produkte",
+    "featured_products": "Empfohlene Produkte",
+    "browse_categories": "Kategorien durchsuchen",
+    "view_all": "Alle anzeigen"
+  },
+  "products": {
+    "title": "Produkte",
+    "description": "Durchsuchen Sie unseren umfangreichen Produktkatalog",
+    "search_placeholder": "Produkte suchen...",
+    "filter_by_category": "Nach Kategorie filtern",
+    "sort_by": "Sortieren nach",
+    "sort_options": {
+      "name_asc": "Name (A-Z)",
+      "name_desc": "Name (Z-A)",
+      "price_asc": "Preis (niedrig bis hoch)",
+      "price_desc": "Preis (hoch bis niedrig)",
+      "newest": "Neueste zuerst"
+    },
+    "no_products": "Keine Produkte gefunden",
+    "price": "Preis",
+    "stock": "Auf Lager",
+    "out_of_stock": "Nicht vorrätig",
+    "add_to_cart": "In Warenkorb",
+    "view_details": "Details anzeigen",
+    "product_added": "Produkt zum Warenkorb hinzugefügt"
+  },
+  "product": {
+    "details": "Produktdetails",
+    "description": "Beschreibung",
+    "specifications": "Spezifikationen",
+    "reviews": "Bewertungen",
+    "related_products": "Ähnliche Produkte",
+    "quantity": "Menge",
+    "sku": "Artikelnummer",
+    "category": "Kategorie",
+    "weight": "Gewicht",
+    "dimensions": "Abmessungen"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "item": "Artikel",
+    "quantity": "Menge",
+    "price": "Preis",
+    "total": "Gesamt",
+    "subtotal": "Zwischensumme",
+    "remove": "Entfernen",
+    "update": "Aktualisieren",
+    "checkout": "Zur Kasse",
+    "continue_shopping": "Weiter einkaufen",
+    "item_removed": "Artikel aus Warenkorb entfernt",
+    "quantity_updated": "Menge aktualisiert"
+  },
+  "checkout": {
+    "title": "Kasse",
+    "shipping_address": "Lieferadresse",
+    "billing_address": "Rechnungsadresse",
+    "payment_method": "Zahlungsmethode",
+    "order_summary": "Bestellübersicht",
+    "place_order": "Bestellung aufgeben",
+    "same_as_shipping": "Gleich wie Lieferadresse"
+  },
+  "orders": {
+    "title": "Meine Bestellungen",
+    "order_number": "Bestellung Nr.",
+    "date": "Datum",
+    "status": "Status",
+    "total": "Gesamt",
+    "view_details": "Details anzeigen",
+    "no_orders": "Keine Bestellungen gefunden",
+    "status_pending": "Ausstehend",
+    "status_confirmed": "Bestätigt",
+    "status_processing": "In Bearbeitung",
+    "status_shipped": "Versandt",
+    "status_delivered": "Zugestellt",
+    "status_cancelled": "Storniert"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirm_password": "Passwort bestätigen",
+    "full_name": "Vollständiger Name",
+    "phone": "Telefon",
+    "login_success": "Anmeldung erfolgreich",
+    "register_success": "Registrierung erfolgreich",
+    "logout_success": "Abmeldung erfolgreich",
+    "invalid_credentials": "Ungültige E-Mail oder Passwort",
+    "email_exists": "E-Mail bereits vorhanden",
+    "forgot_password": "Passwort vergessen?"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "personal_info": "Persönliche Informationen",
+    "address_book": "Adressbuch",
+    "order_history": "Bestellhistorie",
+    "update_profile": "Profil aktualisieren",
+    "change_password": "Passwort ändern",
+    "profile_updated": "Profil erfolgreich aktualisiert"
+  },
+  "common": {
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "page": "Seite",
+    "of": "von",
+    "showing": "Anzeigen",
+    "results": "Ergebnisse",
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "success": "Erfolg",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige"
+  },
+  "errors": {
+    "404": "Seite nicht gefunden",
+    "500": "Interner Serverfehler",
+    "network": "Netzwerkfehler",
+    "validation": "Bitte überprüfen Sie Ihre Eingabe",
+    "required": "Dieses Feld ist erforderlich",
+    "invalid_email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "password_too_short": "Passwort muss mindestens 8 Zeichen lang sein",
+    "passwords_not_match": "Passwörter stimmen nicht überein"
+  },
+  "categories": {
+    "all": "Alle Kategorien",
+    "electronics": "Elektronik",
+    "clothing": "Kleidung",
+    "books": "Bücher",
+    "home": "Haus & Garten",
+    "sports": "Sport & Outdoor",
+    "toys": "Spielzeug & Spiele"
+  }
+}

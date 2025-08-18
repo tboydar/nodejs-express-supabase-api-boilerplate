@@ -1,0 +1,522 @@
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-cart3 me-2"></i>
+                    <%= __('cart.title') %>
+                </h1>
+                <button id="clear-cart-btn" class="btn btn-outline-danger btn-sm" style="display: none;">
+                    <i class="bi bi-trash me-1"></i>
+                    <%= __('cart.clear') %>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Loading State -->
+            <div id="cart-loading" class="text-center py-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted"><%= __('common.loading') %></p>
+            </div>
+
+            <!-- Empty Cart -->
+            <div id="empty-cart" class="text-center py-5" style="display: none;">
+                <i class="bi bi-cart-x display-1 text-muted mb-3"></i>
+                <h3 class="text-muted"><%= __('cart.empty.title') %></h3>
+                <p class="text-muted"><%= __('cart.empty.message') %></p>
+                <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    <%= __('cart.empty.shopNow') %>
+                </a>
+            </div>
+
+            <!-- Cart Items -->
+            <div id="cart-items" style="display: none;">
+                <!-- Cart items will be loaded here dynamically -->
+            </div>
+        </div>
+
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div id="cart-summary" class="card sticky-top" style="top: 20px; display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt me-2"></i>
+                        <%= __('cart.summary.title') %>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><%= __('cart.summary.subtotal') %></span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><%= __('cart.summary.shipping') %></span>
+                        <span class="text-muted"><%= __('cart.summary.freeShipping') %></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><%= __('cart.summary.tax') %></span>
+                        <span id="cart-tax">$0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span><%= __('cart.summary.total') %></span>
+                        <span id="cart-total">$0.00</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button id="checkout-btn" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-credit-card me-2"></i>
+                        <%= __('cart.checkout') %>
+                    </button>
+                    <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        <%= __('cart.continueShopping') %>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Prompt for Guest Users -->
+    <div id="login-prompt" class="alert alert-info mt-4" style="display: none;">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="alert-heading mb-1">
+                    <i class="bi bi-person-check me-2"></i>
+                    <%= __('cart.loginPrompt.title') %>
+                </h6>
+                <p class="mb-0"><%= __('cart.loginPrompt.message') %></p>
+            </div>
+            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                <a href="<%= getLocalizedUrl('/auth/login') %>" class="btn btn-primary">
+                    <%= __('auth.login') %>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Item Template -->
+<template id="cart-item-template">
+    <div class="card mb-3 cart-item" data-item-id="">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <img src="" alt="" class="img-fluid rounded item-image">
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-1 item-name"></h6>
+                    <small class="text-muted item-category"></small>
+                    <p class="text-muted small mb-0 item-description"></p>
+                </div>
+                <div class="col-md-2">
+                    <div class="fw-bold item-price"></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <button class="btn btn-outline-secondary quantity-decrease" type="button">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <input type="number" class="form-control text-center quantity-input" 
+                               min="1" max="100" value="1">
+                        <button class="btn btn-outline-secondary quantity-increase" type="button">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <div class="text-center mt-1">
+                        <small class="text-muted stock-info"></small>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-outline-danger btn-sm remove-item" title="<%= __('cart.removeItem') %>">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+.cart-item {
+    transition: all 0.2s ease;
+}
+
+.cart-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.quantity-input {
+    background-color: #f8f9fa;
+    border-left: none;
+    border-right: none;
+}
+
+.quantity-input:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+.item-image {
+    max-height: 80px;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .cart-item .row > div {
+        margin-bottom: 10px;
+    }
+    
+    .cart-item .row > div:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const CartPage = {
+        cartItems: [],
+        isAuthenticated: false,
+        
+        init() {
+            this.isAuthenticated = !!App.getAuthToken();
+            this.setupEventListeners();
+            this.loadCart();
+        },
+        
+        setupEventListeners() {
+            // Clear cart button
+            document.getElementById('clear-cart-btn').addEventListener('click', () => {
+                this.clearCart();
+            });
+            
+            // Checkout button
+            document.getElementById('checkout-btn').addEventListener('click', () => {
+                this.proceedToCheckout();
+            });
+        },
+        
+        async loadCart() {
+            try {
+                if (this.isAuthenticated) {
+                    await this.loadUserCart();
+                } else {
+                    this.loadGuestCart();
+                }
+            } catch (error) {
+                console.error('Error loading cart:', error);
+                this.showError('Failed to load cart');
+            } finally {
+                document.getElementById('cart-loading').style.display = 'none';
+            }
+        },
+        
+        async loadUserCart() {
+            const response = await fetch('/api/v1/cart', {
+                headers: {
+                    'Authorization': `Bearer ${App.getAuthToken()}`,
+                    'Accept-Language': '<%= getLocale() %>'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                this.cartItems = data.data.items;
+                this.renderCart(data.data.summary);
+            } else {
+                this.showError(data.error || 'Failed to load cart');
+            }
+        },
+        
+        loadGuestCart() {
+            const savedCart = localStorage.getItem('ecommerce_cart');
+            if (savedCart) {
+                try {
+                    const cart = JSON.parse(savedCart);
+                    this.cartItems = cart.items || [];
+                    this.renderGuestCart();
+                } catch (error) {
+                    console.error('Error parsing guest cart:', error);
+                    this.cartItems = [];
+                    this.renderCart();
+                }
+            } else {
+                this.cartItems = [];
+                this.renderCart();
+            }
+        },
+        
+        renderCart(summary = null) {
+            if (this.cartItems.length === 0) {
+                this.showEmptyCart();
+                return;
+            }
+            
+            this.renderCartItems();
+            this.renderCartSummary(summary);
+            this.showCartContent();
+            
+            if (!this.isAuthenticated) {
+                document.getElementById('login-prompt').style.display = 'block';
+            }
+        },
+        
+        renderGuestCart() {
+            // For guest cart, we need to fetch product details
+            // This is a simplified version - in production you might want to cache product data
+            this.renderCart();
+        },
+        
+        renderCartItems() {
+            const container = document.getElementById('cart-items');
+            const template = document.getElementById('cart-item-template');
+            
+            container.innerHTML = '';
+            
+            this.cartItems.forEach(item => {
+                const clone = template.content.cloneNode(true);
+                const cartItem = clone.querySelector('.cart-item');
+                
+                cartItem.dataset.itemId = item.id;
+                cartItem.querySelector('.item-image').src = item.product?.imageUrl || '/images/placeholder.jpg';
+                cartItem.querySelector('.item-image').alt = item.product?.name || 'Product';
+                cartItem.querySelector('.item-name').textContent = item.product?.name || 'Product';
+                cartItem.querySelector('.item-category').textContent = item.category?.name || '';
+                cartItem.querySelector('.item-description').textContent = item.product?.description || '';
+                cartItem.querySelector('.item-price').textContent = `$${parseFloat(item.product?.price || 0).toFixed(2)}`;
+                cartItem.querySelector('.quantity-input').value = item.quantity;
+                cartItem.querySelector('.stock-info').textContent = `${item.product?.stockQuantity || 0} in stock`;
+                
+                // Setup quantity controls
+                this.setupQuantityControls(clone, item);
+                
+                // Setup remove button
+                clone.querySelector('.remove-item').addEventListener('click', () => {
+                    this.removeItem(item.id);
+                });
+                
+                container.appendChild(clone);
+            });
+        },
+        
+        setupQuantityControls(element, item) {
+            const decreaseBtn = element.querySelector('.quantity-decrease');
+            const increaseBtn = element.querySelector('.quantity-increase');
+            const quantityInput = element.querySelector('.quantity-input');
+            
+            decreaseBtn.addEventListener('click', () => {
+                const newQuantity = Math.max(1, parseInt(quantityInput.value) - 1);
+                this.updateQuantity(item.id, newQuantity);
+            });
+            
+            increaseBtn.addEventListener('click', () => {
+                const maxStock = item.product?.stockQuantity || 100;
+                const newQuantity = Math.min(maxStock, parseInt(quantityInput.value) + 1);
+                this.updateQuantity(item.id, newQuantity);
+            });
+            
+            quantityInput.addEventListener('change', (e) => {
+                const newQuantity = Math.max(1, Math.min(item.product?.stockQuantity || 100, parseInt(e.target.value)));
+                this.updateQuantity(item.id, newQuantity);
+            });
+        },
+        
+        renderCartSummary(summary) {
+            if (!summary) {
+                // Calculate summary for guest cart
+                const subtotal = this.cartItems.reduce((total, item) => {
+                    return total + (parseFloat(item.product?.price || 0) * item.quantity);
+                }, 0);
+                
+                summary = {
+                    totalAmount: subtotal.toFixed(2)
+                };
+            }
+            
+            const tax = parseFloat(summary.totalAmount) * 0.1; // 10% tax
+            const total = parseFloat(summary.totalAmount) + tax;
+            
+            document.getElementById('cart-subtotal').textContent = `$${summary.totalAmount}`;
+            document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+        },
+        
+        async updateQuantity(itemId, quantity) {
+            if (this.isAuthenticated) {
+                await this.updateUserCartQuantity(itemId, quantity);
+            } else {
+                this.updateGuestCartQuantity(itemId, quantity);
+            }
+        },
+        
+        async updateUserCartQuantity(itemId, quantity) {
+            try {
+                const response = await fetch(`/api/v1/cart/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${App.getAuthToken()}`
+                    },
+                    body: JSON.stringify({ quantity })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    this.loadCart();
+                    App.updateCartBadge();
+                } else {
+                    App.showToast(data.error || 'Failed to update quantity', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+                App.showToast('Failed to update quantity', 'error');
+            }
+        },
+        
+        updateGuestCartQuantity(itemId, quantity) {
+            const item = this.cartItems.find(item => item.productId === itemId);
+            if (item) {
+                item.quantity = quantity;
+                this.saveGuestCart();
+                this.renderCart();
+                App.updateCartBadge();
+            }
+        },
+        
+        async removeItem(itemId) {
+            if (this.isAuthenticated) {
+                await this.removeUserCartItem(itemId);
+            } else {
+                this.removeGuestCartItem(itemId);
+            }
+        },
+        
+        async removeUserCartItem(itemId) {
+            try {
+                const response = await fetch(`/api/v1/cart/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${App.getAuthToken()}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    this.loadCart();
+                    App.updateCartBadge();
+                    App.showToast('Item removed from cart', 'success');
+                } else {
+                    App.showToast(data.error || 'Failed to remove item', 'error');
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+                App.showToast('Failed to remove item', 'error');
+            }
+        },
+        
+        removeGuestCartItem(productId) {
+            this.cartItems = this.cartItems.filter(item => item.productId !== productId);
+            this.saveGuestCart();
+            this.renderCart();
+            App.updateCartBadge();
+            App.showToast('Item removed from cart', 'success');
+        },
+        
+        async clearCart() {
+            if (!confirm('<%= __("cart.confirmClear") %>')) {
+                return;
+            }
+            
+            if (this.isAuthenticated) {
+                await this.clearUserCart();
+            } else {
+                this.clearGuestCart();
+            }
+        },
+        
+        async clearUserCart() {
+            try {
+                const response = await fetch('/api/v1/cart', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${App.getAuthToken()}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    this.cartItems = [];
+                    this.renderCart();
+                    App.updateCartBadge();
+                    App.showToast('Cart cleared', 'success');
+                } else {
+                    App.showToast(data.error || 'Failed to clear cart', 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing cart:', error);
+                App.showToast('Failed to clear cart', 'error');
+            }
+        },
+        
+        clearGuestCart() {
+            this.cartItems = [];
+            this.saveGuestCart();
+            this.renderCart();
+            App.updateCartBadge();
+            App.showToast('Cart cleared', 'success');
+        },
+        
+        saveGuestCart() {
+            localStorage.setItem('ecommerce_cart', JSON.stringify({
+                items: this.cartItems,
+                total: 0
+            }));
+        },
+        
+        showEmptyCart() {
+            document.getElementById('empty-cart').style.display = 'block';
+            document.getElementById('cart-items').style.display = 'none';
+            document.getElementById('cart-summary').style.display = 'none';
+            document.getElementById('clear-cart-btn').style.display = 'none';
+        },
+        
+        showCartContent() {
+            document.getElementById('empty-cart').style.display = 'none';
+            document.getElementById('cart-items').style.display = 'block';
+            document.getElementById('cart-summary').style.display = 'block';
+            document.getElementById('clear-cart-btn').style.display = 'inline-block';
+        },
+        
+        showError(message) {
+            App.showToast(message, 'error');
+            this.showEmptyCart();
+        },
+        
+        proceedToCheckout() {
+            if (!this.isAuthenticated) {
+                App.showToast('<%= __("cart.loginRequired") %>', 'info');
+                window.location.href = '<%= getLocalizedUrl("/auth/login") %>';
+                return;
+            }
+            
+            // Redirect to checkout page (to be implemented)
+            window.location.href = '<%= getLocalizedUrl("/checkout") %>';
+        }
+    };
+    
+    CartPage.init();
+});
+</script>

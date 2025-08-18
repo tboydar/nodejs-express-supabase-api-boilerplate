@@ -1,0 +1,153 @@
+<!-- Hero Section -->
+<section class="hero bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <%= __('home.title') %>
+                </h1>
+                <p class="lead mb-4">
+                    <%= __('home.subtitle') %>
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-light btn-lg">
+                        <i class="bi bi-grid"></i>
+                        <%= __('navigation.products') %>
+                    </a>
+                    <a href="<%= getLocalizedUrl('/categories') %>" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-tags"></i>
+                        <%= __('home.browse_categories') %>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="/images/hero-shopping.svg" alt="Shopping" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Categories -->
+<section class="featured-categories py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold"><%= __('home.browse_categories') %></h2>
+            <p class="text-muted">Discover products by category</p>
+        </div>
+        
+        <div class="row g-4">
+            <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                <% categories.slice(0, 6).forEach(category => { %>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card category-card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="category-icon mb-3">
+                                    <% if (category.imageUrl) { %>
+                                        <img src="<%= category.imageUrl %>" alt="<%= category.name %>" 
+                                             class="img-fluid rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
+                                    <% } else { %>
+                                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                             style="width: 80px; height: 80px;">
+                                            <i class="bi bi-tag fs-2"></i>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                <h5 class="card-title"><%= category.name %></h5>
+                                <% if (category.description) { %>
+                                    <p class="card-text text-muted small"><%= category.description %></p>
+                                <% } %>
+                                <a href="<%= getLocalizedUrl('/categories/' + category.id) %>" 
+                                   class="btn btn-outline-primary">
+                                    <%= __('home.view_all') %>
+                                    <% if (category.productCount) { %>
+                                        (<%= category.productCount %>)
+                                    <% } %>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-12 text-center">
+                    <p class="text-muted">No categories available.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="featured-products py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h2 class="fw-bold mb-0"><%= __('home.featured_products') %></h2>
+                <p class="text-muted mb-0">Hand-picked products just for you</p>
+            </div>
+            <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-primary">
+                <%= __('home.view_all') %>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        
+        <div class="row g-4" id="featured-products">
+            <% if (typeof featuredProducts !== 'undefined' && featuredProducts.length > 0) { %>
+                <% featuredProducts.forEach(product => { %>
+                    <%- include('../partials/product-card', { product: product }) %>
+                <% }) %>
+            <% } else { %>
+                <!-- Loading placeholder -->
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden"><%= __('common.loading') %></span>
+                    </div>
+                    <p class="text-muted mt-3"><%= __('common.loading') %></p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <div class="stat-icon text-primary mb-3">
+                        <i class="bi bi-truck fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold">Free Shipping</h3>
+                    <p class="text-muted mb-0">On orders over $99</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <div class="stat-icon text-primary mb-3">
+                        <i class="bi bi-arrow-return-left fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold">30-Day Returns</h3>
+                    <p class="text-muted mb-0">Easy return policy</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <div class="stat-icon text-primary mb-3">
+                        <i class="bi bi-headset fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold">24/7 Support</h3>
+                    <p class="text-muted mb-0">Customer service</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <div class="stat-icon text-primary mb-3">
+                        <i class="bi bi-shield-check fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold">Secure Payment</h3>
+                    <p class="text-muted mb-0">100% secure checkout</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

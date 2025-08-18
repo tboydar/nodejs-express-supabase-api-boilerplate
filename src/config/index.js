@@ -14,7 +14,9 @@ const config = {
   
   // JWT
   jwtSecret: process.env.JWT_SECRET || 'your-fallback-secret-key',
-  jwtExpiresIn: '7d',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'your-fallback-refresh-secret',
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   
   // Rate Limiting
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes

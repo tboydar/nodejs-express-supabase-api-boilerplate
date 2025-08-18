@@ -2,8 +2,8 @@ const express = require('express');
 
 // Import route modules
 const authRoutes = require('./auth');
-const productRoutes = require('./products');
-const categoryRoutes = require('./categories');
+const productRoutes = require('./api/products');
+const categoryRoutes = require('./api/categories');
 const cartRoutes = require('./cart');
 const orderRoutes = require('./orders');
 

@@ -1,0 +1,597 @@
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-box-seam me-2"></i>
+                    <%= __('orders.title') %>
+                </h1>
+                <div class="d-flex gap-2">
+                    <select id="status-filter" class="form-select form-select-sm" style="width: auto;">
+                        <option value="">All Status</option>
+                        <option value="pending"><%= __('orders.status_pending') %></option>
+                        <option value="confirmed"><%= __('orders.status_confirmed') %></option>
+                        <option value="processing"><%= __('orders.status_processing') %></option>
+                        <option value="shipped"><%= __('orders.status_shipped') %></option>
+                        <option value="delivered"><%= __('orders.status_delivered') %></option>
+                        <option value="cancelled"><%= __('orders.status_cancelled') %></option>
+                    </select>
+                    <button id="refresh-orders" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="orders-loading" class="text-center py-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted"><%= __('common.loading') %></p>
+    </div>
+
+    <!-- No Orders -->
+    <div id="no-orders" class="text-center py-5" style="display: none;">
+        <i class="bi bi-box-seam display-1 text-muted mb-3"></i>
+        <h3 class="text-muted"><%= __('orders.no_orders') %></h3>
+        <p class="text-muted">You haven't placed any orders yet.</p>
+        <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-primary">
+            <i class="bi bi-cart me-2"></i>
+            Start Shopping
+        </a>
+    </div>
+
+    <!-- Orders List -->
+    <div id="orders-container" style="display: none;">
+        <div id="orders-list">
+            <!-- Orders will be loaded here dynamically -->
+        </div>
+        
+        <!-- Pagination -->
+        <div id="pagination-container" class="d-flex justify-content-center mt-4">
+            <!-- Pagination will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Order Item Template -->
+<template id="order-item-template">
+    <div class="card mb-3 order-item" data-order-id="">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="d-flex flex-column">
+                        <h6 class="mb-1 order-number"></h6>
+                        <small class="text-muted order-date"></small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <span class="badge order-status"></span>
+                </div>
+                <div class="col-md-2">
+                    <span class="badge order-payment-status"></span>
+                </div>
+                <div class="col-md-2">
+                    <div class="fw-bold order-total"></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-outline-primary btn-sm view-order" 
+                                data-bs-toggle="modal" data-bs-target="#orderModal">
+                            <i class="bi bi-eye me-1"></i>
+                            <%= __('orders.view_details') %>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm cancel-order" style="display: none;">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderModalLabel">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="order-details-loading" class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="order-details-content" style="display: none;">
+                    <!-- Order details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-danger" id="modal-cancel-order" style="display: none;">
+                    Cancel Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Template -->
+<template id="order-details-template">
+    <div class="order-details">
+        <!-- Order Info -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Order Information</h6>
+                <p class="mb-1"><strong>Order Number:</strong> <span class="order-number"></span></p>
+                <p class="mb-1"><strong>Date:</strong> <span class="order-date"></span></p>
+                <p class="mb-1"><strong>Status:</strong> <span class="order-status-badge"></span></p>
+                <p class="mb-1"><strong>Payment:</strong> <span class="payment-status-badge"></span></p>
+            </div>
+            <div class="col-md-6">
+                <h6>Shipping Address</h6>
+                <div class="shipping-address"></div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="mb-4">
+            <h6>Order Items</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="order-items-table">
+                        <!-- Items will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="row">
+            <div class="col-md-6 offset-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span class="order-subtotal"></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <span class="text-muted">Free</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax:</span>
+                            <span class="order-tax"></span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total:</span>
+                            <span class="order-total"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="order-notes mt-3" style="display: none;">
+            <h6>Notes</h6>
+            <p class="notes-content"></p>
+        </div>
+    </div>
+</template>
+
+<style>
+.order-item {
+    transition: all 0.2s ease;
+}
+
+.order-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-status {
+    font-size: 0.75rem;
+}
+
+.badge.bg-pending { background-color: #ffc107 !important; }
+.badge.bg-confirmed { background-color: #17a2b8 !important; }
+.badge.bg-processing { background-color: #007bff !important; }
+.badge.bg-shipped { background-color: #28a745 !important; }
+.badge.bg-delivered { background-color: #198754 !important; }
+.badge.bg-cancelled { background-color: #dc3545 !important; }
+
+.badge.bg-paid { background-color: #198754 !important; }
+.badge.bg-failed { background-color: #dc3545 !important; }
+.badge.bg-refunded { background-color: #6c757d !important; }
+
+@media (max-width: 768px) {
+    .order-item .row > div {
+        margin-bottom: 10px;
+    }
+    
+    .order-item .row > div:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const OrdersPage = {
+        currentPage: 1,
+        currentStatus: '',
+        orders: [],
+        
+        init() {
+            this.setupEventListeners();
+            this.loadOrders();
+        },
+        
+        setupEventListeners() {
+            // Status filter
+            document.getElementById('status-filter').addEventListener('change', (e) => {
+                this.currentStatus = e.target.value;
+                this.currentPage = 1;
+                this.loadOrders();
+            });
+            
+            // Refresh button
+            document.getElementById('refresh-orders').addEventListener('click', () => {
+                this.loadOrders();
+            });
+            
+            // Modal events
+            document.getElementById('orderModal').addEventListener('show.bs.modal', (e) => {
+                const button = e.relatedTarget;
+                const orderId = button.closest('.order-item').dataset.orderId;
+                this.loadOrderDetails(orderId);
+            });
+        },
+        
+        async loadOrders() {
+            try {
+                this.showLoading();
+                
+                const params = new URLSearchParams({
+                    page: this.currentPage,
+                    limit: 10
+                });
+                
+                if (this.currentStatus) {
+                    params.append('status', this.currentStatus);
+                }
+                
+                const response = await fetch(`/api/v1/orders?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${App.getAuthToken()}`,
+                        'Accept-Language': '<%= getLocale() %>'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    this.orders = data.data;
+                    this.renderOrders(data.pagination);
+                } else {
+                    this.showError(data.error || 'Failed to load orders');
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                this.showError('Failed to load orders');
+            } finally {
+                this.hideLoading();
+            }
+        },
+        
+        renderOrders(pagination) {
+            if (this.orders.length === 0) {
+                this.showNoOrders();
+                return;
+            }
+            
+            const container = document.getElementById('orders-list');
+            const template = document.getElementById('order-item-template');
+            
+            container.innerHTML = '';
+            
+            this.orders.forEach(order => {
+                const clone = template.content.cloneNode(true);
+                const orderItem = clone.querySelector('.order-item');
+                
+                orderItem.dataset.orderId = order.id;
+                orderItem.querySelector('.order-number').textContent = order.orderNumber;
+                orderItem.querySelector('.order-date').textContent = new Date(order.createdAt).toLocaleDateString();
+                
+                // Status badge
+                const statusBadge = orderItem.querySelector('.order-status');
+                statusBadge.textContent = this.getStatusText(order.status);
+                statusBadge.className = `badge bg-${order.status}`;
+                
+                // Payment status badge
+                const paymentBadge = orderItem.querySelector('.order-payment-status');
+                paymentBadge.textContent = this.getPaymentStatusText(order.paymentStatus);
+                paymentBadge.className = `badge bg-${order.paymentStatus}`;
+                
+                orderItem.querySelector('.order-total').textContent = `$${parseFloat(order.totalAmount).toFixed(2)}`;
+                
+                // Show cancel button for pending/confirmed orders
+                if (['pending', 'confirmed'].includes(order.status)) {
+                    const cancelBtn = orderItem.querySelector('.cancel-order');
+                    cancelBtn.style.display = 'inline-block';
+                    cancelBtn.addEventListener('click', () => this.cancelOrder(order.id));
+                }
+                
+                container.appendChild(clone);
+            });
+            
+            this.renderPagination(pagination);
+            this.showOrdersContainer();
+        },
+        
+        renderPagination(pagination) {
+            const container = document.getElementById('pagination-container');
+            
+            if (pagination.totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '<nav><ul class="pagination">';
+            
+            // Previous button
+            if (pagination.hasPrev) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" data-page="${pagination.page - 1}">Previous</a>
+                </li>`;
+            } else {
+                paginationHTML += `<li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>`;
+            }
+            
+            // Page numbers
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                if (i === pagination.page) {
+                    paginationHTML += `<li class="page-item active">
+                        <span class="page-link">${i}</span>
+                    </li>`;
+                } else {
+                    paginationHTML += `<li class="page-item">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>`;
+                }
+            }
+            
+            // Next button
+            if (pagination.hasNext) {
+                paginationHTML += `<li class="page-item">
+                    <a class="page-link" href="#" data-page="${pagination.page + 1}">Next</a>
+                </li>`;
+            } else {
+                paginationHTML += `<li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>`;
+            }
+            
+            paginationHTML += '</ul></nav>';
+            container.innerHTML = paginationHTML;
+            
+            // Add click listeners to pagination links
+            container.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A' && e.target.dataset.page) {
+                    e.preventDefault();
+                    this.currentPage = parseInt(e.target.dataset.page);
+                    this.loadOrders();
+                }
+            });
+        },
+        
+        async loadOrderDetails(orderId) {
+            try {
+                document.getElementById('order-details-loading').style.display = 'block';
+                document.getElementById('order-details-content').style.display = 'none';
+                
+                const response = await fetch(`/api/v1/orders/${orderId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${App.getAuthToken()}`,
+                        'Accept-Language': '<%= getLocale() %>'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    this.renderOrderDetails(data.data);
+                } else {
+                    App.showToast(data.error || 'Failed to load order details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading order details:', error);
+                App.showToast('Failed to load order details', 'error');
+            } finally {
+                document.getElementById('order-details-loading').style.display = 'none';
+            }
+        },
+        
+        renderOrderDetails(order) {
+            const template = document.getElementById('order-details-template');
+            const clone = template.content.cloneNode(true);
+            
+            // Basic order info
+            clone.querySelector('.order-number').textContent = order.orderNumber;
+            clone.querySelector('.order-date').textContent = new Date(order.createdAt).toLocaleDateString();
+            
+            // Status badges
+            const statusBadge = clone.querySelector('.order-status-badge');
+            statusBadge.innerHTML = `<span class="badge bg-${order.status}">${this.getStatusText(order.status)}</span>`;
+            
+            const paymentBadge = clone.querySelector('.payment-status-badge');
+            paymentBadge.innerHTML = `<span class="badge bg-${order.paymentStatus}">${this.getPaymentStatusText(order.paymentStatus)}</span>`;
+            
+            // Shipping address
+            const shippingAddress = JSON.parse(order.shippingAddress);
+            clone.querySelector('.shipping-address').innerHTML = `
+                <p class="mb-1">${shippingAddress.fullName}</p>
+                <p class="mb-1">${shippingAddress.address}</p>
+                <p class="mb-1">${shippingAddress.city}, ${shippingAddress.postalCode}</p>
+                <p class="mb-0">${shippingAddress.country}</p>
+            `;
+            
+            // Order items
+            const itemsTable = clone.querySelector('.order-items-table');
+            order.items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="${item.productImage || '/images/placeholder.jpg'}" 
+                                 alt="${item.productName}" class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                            <span>${item.productName}</span>
+                        </div>
+                    </td>
+                    <td>${item.quantity}</td>
+                    <td>$${parseFloat(item.price).toFixed(2)}</td>
+                    <td>$${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                `;
+                itemsTable.appendChild(row);
+            });
+            
+            // Order totals
+            const subtotal = parseFloat(order.totalAmount);
+            const tax = subtotal * 0.1;
+            const total = subtotal + tax;
+            
+            clone.querySelector('.order-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            clone.querySelector('.order-tax').textContent = `$${tax.toFixed(2)}`;
+            clone.querySelector('.order-total').textContent = `$${total.toFixed(2)}`;
+            
+            // Notes
+            if (order.notes) {
+                const notesSection = clone.querySelector('.order-notes');
+                notesSection.style.display = 'block';
+                notesSection.querySelector('.notes-content').textContent = order.notes;
+            }
+            
+            // Show cancel button if applicable
+            const modalCancelBtn = document.getElementById('modal-cancel-order');
+            if (['pending', 'confirmed'].includes(order.status)) {
+                modalCancelBtn.style.display = 'inline-block';
+                modalCancelBtn.onclick = () => this.cancelOrder(order.id);
+            } else {
+                modalCancelBtn.style.display = 'none';
+            }
+            
+            const content = document.getElementById('order-details-content');
+            content.innerHTML = '';
+            content.appendChild(clone);
+            content.style.display = 'block';
+        },
+        
+        async cancelOrder(orderId) {
+            if (!confirm('Are you sure you want to cancel this order?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/orders/${orderId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${App.getAuthToken()}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    App.showToast('Order cancelled successfully', 'success');
+                    this.loadOrders();
+                    
+                    // Close modal if open
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('orderModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    App.showToast(data.error || 'Failed to cancel order', 'error');
+                }
+            } catch (error) {
+                console.error('Error cancelling order:', error);
+                App.showToast('Failed to cancel order', 'error');
+            }
+        },
+        
+        getStatusText(status) {
+            const statusTexts = {
+                pending: '<%= __("orders.status_pending") %>',
+                confirmed: '<%= __("orders.status_confirmed") %>',
+                processing: '<%= __("orders.status_processing") %>',
+                shipped: '<%= __("orders.status_shipped") %>',
+                delivered: '<%= __("orders.status_delivered") %>',
+                cancelled: '<%= __("orders.status_cancelled") %>'
+            };
+            return statusTexts[status] || status;
+        },
+        
+        getPaymentStatusText(status) {
+            const statusTexts = {
+                pending: 'Pending',
+                paid: 'Paid',
+                failed: 'Failed',
+                refunded: 'Refunded'
+            };
+            return statusTexts[status] || status;
+        },
+        
+        showLoading() {
+            document.getElementById('orders-loading').style.display = 'block';
+            document.getElementById('orders-container').style.display = 'none';
+            document.getElementById('no-orders').style.display = 'none';
+        },
+        
+        hideLoading() {
+            document.getElementById('orders-loading').style.display = 'none';
+        },
+        
+        showNoOrders() {
+            document.getElementById('no-orders').style.display = 'block';
+            document.getElementById('orders-container').style.display = 'none';
+        },
+        
+        showOrdersContainer() {
+            document.getElementById('orders-container').style.display = 'block';
+            document.getElementById('no-orders').style.display = 'none';
+        },
+        
+        showError(message) {
+            App.showToast(message, 'error');
+            this.showNoOrders();
+        }
+    };
+    
+    // Check if user is authenticated
+    if (!App.getAuthToken()) {
+        window.location.href = '<%= getLocalizedUrl("/auth/login") %>';
+        return;
+    }
+    
+    OrdersPage.init();
+});
+</script>

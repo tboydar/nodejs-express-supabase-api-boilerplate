@@ -9,16 +9,29 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPattern=models",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
     "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\"",
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create",
     "db:seed": "node seeds/index.js",
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "drizzle-kit push:pg",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "setup": "./scripts/setup.sh",
+    "test:setup": "./scripts/test.sh setup",
+    "test:all": "./scripts/test.sh all",
+    "docker:build": "docker build -t ecommerce-demo-api .",
+    "docker:run": "docker run -p 3000:3000 ecommerce-demo-api",
+    "docker:dev": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "security:audit": "npm audit --audit-level moderate",
+    "security:fix": "npm audit fix"
   },
   "keywords": [
     "ecommerce",
@@ -47,7 +60,11 @@
     "joi": "^17.11.0",
     "express-rate-limit": "^7.1.5",
     "multer": "^1.4.5-lts.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "ejs": "^3.1.9",
+    "i18n": "^0.15.1",
+    "cookie-parser": "^1.4.6",
+    "express-validator": "^7.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

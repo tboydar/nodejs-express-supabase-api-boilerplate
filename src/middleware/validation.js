@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { body, param, query, validationResult } = require('express-validator');
 const { AppError } = require('./errorHandler');
 
 const validate = (schema) => {
@@ -160,9 +161,366 @@ const schemas = {
   }),
 };
 
+// Express-validator middleware for handling validation results
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => error.msg);
+    return res.status(400).json({
+      success: false,
+      error: 'Validation failed',
+      details: errorMessages
+    });
+  }
+  next();
+};
+
+// Express-validator validation rules
+const productValidation = {
+  create: [
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Product name is required')
+      .isLength({ min: 1, max: 255 })
+      .withMessage('Product name must be between 1 and 255 characters'),
+    
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 2000 })
+      .withMessage('Description must not exceed 2000 characters'),
+    
+    body('price')
+      .isNumeric()
+      .withMessage('Price must be a number')
+      .custom((value) => {
+        if (parseFloat(value) < 0) {
+          throw new Error('Price must be positive');
+        }
+        return true;
+      }),
+    
+    body('stockQuantity')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Stock quantity must be a non-negative integer'),
+    
+    body('categoryId')
+      .optional()
+      .isUUID()
+      .withMessage('Category ID must be a valid UUID'),
+    
+    body('sku')
+      .optional()
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('SKU must not exceed 100 characters'),
+    
+    body('imageUrl')
+      .optional()
+      .isURL()
+      .withMessage('Image URL must be a valid URL'),
+    
+    body('images')
+      .optional()
+      .isArray()
+      .withMessage('Images must be an array'),
+    
+    body('weight')
+      .optional()
+      .isNumeric()
+      .withMessage('Weight must be a number')
+      .custom((value) => {
+        if (value && parseFloat(value) < 0) {
+          throw new Error('Weight must be positive');
+        }
+        return true;
+      }),
+    
+    handleValidationErrors
+  ],
+
+  update: [
+    body('name')
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage('Product name cannot be empty')
+      .isLength({ min: 1, max: 255 })
+      .withMessage('Product name must be between 1 and 255 characters'),
+    
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 2000 })
+      .withMessage('Description must not exceed 2000 characters'),
+    
+    body('price')
+      .optional()
+      .isNumeric()
+      .withMessage('Price must be a number')
+      .custom((value) => {
+        if (value && parseFloat(value) < 0) {
+          throw new Error('Price must be positive');
+        }
+        return true;
+      }),
+    
+    body('stockQuantity')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Stock quantity must be a non-negative integer'),
+    
+    body('categoryId')
+      .optional()
+      .isUUID()
+      .withMessage('Category ID must be a valid UUID'),
+    
+    body('sku')
+      .optional()
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('SKU must not exceed 100 characters'),
+    
+    body('imageUrl')
+      .optional()
+      .isURL()
+      .withMessage('Image URL must be a valid URL'),
+    
+    body('weight')
+      .optional()
+      .isNumeric()
+      .withMessage('Weight must be a number')
+      .custom((value) => {
+        if (value && parseFloat(value) < 0) {
+          throw new Error('Weight must be positive');
+        }
+        return true;
+      }),
+    
+    handleValidationErrors
+  ],
+
+  paramId: [
+    param('id')
+      .isUUID()
+      .withMessage('Product ID must be a valid UUID'),
+    handleValidationErrors
+  ],
+
+  query: [
+    query('page')
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage('Page must be a positive integer'),
+    
+    query('limit')
+      .optional()
+      .isInt({ min: 1, max: 100 })
+      .withMessage('Limit must be between 1 and 100'),
+    
+    query('sort')
+      .optional()
+      .isIn(['newest', 'oldest', 'name_asc', 'name_desc', 'price_asc', 'price_desc'])
+      .withMessage('Sort must be one of: newest, oldest, name_asc, name_desc, price_asc, price_desc'),
+    
+    handleValidationErrors
+  ]
+};
+
+const categoryValidation = {
+  create: [
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Category name is required')
+      .isLength({ min: 1, max: 255 })
+      .withMessage('Category name must be between 1 and 255 characters'),
+    
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Description must not exceed 1000 characters'),
+    
+    body('imageUrl')
+      .optional()
+      .isURL()
+      .withMessage('Image URL must be a valid URL'),
+    
+    handleValidationErrors
+  ],
+
+  update: [
+    body('name')
+      .optional()
+      .trim()
+      .notEmpty()
+      .withMessage('Category name cannot be empty')
+      .isLength({ min: 1, max: 255 })
+      .withMessage('Category name must be between 1 and 255 characters'),
+    
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Description must not exceed 1000 characters'),
+    
+    body('imageUrl')
+      .optional()
+      .isURL()
+      .withMessage('Image URL must be a valid URL'),
+    
+    handleValidationErrors
+  ],
+
+  paramId: [
+    param('id')
+      .isUUID()
+      .withMessage('Category ID must be a valid UUID'),
+    handleValidationErrors
+  ]
+};
+
+// Auth validation rules
+const authValidation = {
+  register: [
+    body('email')
+      .isEmail()
+      .normalizeEmail()
+      .withMessage('Please provide a valid email address'),
+    
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    
+    body('fullName')
+      .optional()
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage('Full name must be between 1 and 100 characters'),
+    
+    body('phone')
+      .optional()
+      .isMobilePhone()
+      .withMessage('Please provide a valid phone number'),
+    
+    handleValidationErrors
+  ],
+
+  login: [
+    body('email')
+      .isEmail()
+      .normalizeEmail()
+      .withMessage('Please provide a valid email address'),
+    
+    body('password')
+      .notEmpty()
+      .withMessage('Password is required'),
+    
+    handleValidationErrors
+  ],
+
+  refreshToken: [
+    body('refreshToken')
+      .notEmpty()
+      .withMessage('Refresh token is required'),
+    
+    handleValidationErrors
+  ],
+
+  changePassword: [
+    body('currentPassword')
+      .notEmpty()
+      .withMessage('Current password is required'),
+    
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('New password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    
+    handleValidationErrors
+  ],
+
+  updateProfile: [
+    body('fullName')
+      .optional()
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage('Full name must be between 1 and 100 characters'),
+    
+    body('phone')
+      .optional()
+      .isMobilePhone()
+      .withMessage('Please provide a valid phone number'),
+    
+    handleValidationErrors
+  ]
+};
+
+// Cart validation rules
+const cartValidation = {
+  addToCart: [
+    body('productId')
+      .isUUID()
+      .withMessage('Product ID must be a valid UUID'),
+    
+    body('quantity')
+      .isInt({ min: 1, max: 100 })
+      .withMessage('Quantity must be between 1 and 100'),
+    
+    handleValidationErrors
+  ],
+
+  updateCartItem: [
+    param('itemId')
+      .isUUID()
+      .withMessage('Cart item ID must be a valid UUID'),
+    
+    body('quantity')
+      .isInt({ min: 1, max: 100 })
+      .withMessage('Quantity must be between 1 and 100'),
+    
+    handleValidationErrors
+  ],
+
+  removeFromCart: [
+    param('itemId')
+      .isUUID()
+      .withMessage('Cart item ID must be a valid UUID'),
+    
+    handleValidationErrors
+  ],
+
+  mergeGuestCart: [
+    body('guestCartItems')
+      .isArray({ min: 1 })
+      .withMessage('Guest cart items must be a non-empty array'),
+    
+    body('guestCartItems.*.productId')
+      .isUUID()
+      .withMessage('Each cart item must have a valid product ID'),
+    
+    body('guestCartItems.*.quantity')
+      .isInt({ min: 1, max: 100 })
+      .withMessage('Each cart item quantity must be between 1 and 100'),
+    
+    handleValidationErrors
+  ]
+};
+
 module.exports = {
   validate,
   validateParams,
   validateQuery,
   schemas,
+  handleValidationErrors,
+  productValidation,
+  categoryValidation,
+  authValidation,
+  cartValidation
 };

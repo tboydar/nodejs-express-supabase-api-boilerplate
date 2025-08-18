@@ -1,0 +1,295 @@
+<!-- Page Header -->
+<div class="page-header py-4 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="mb-0"><%= __('products.title') %></h1>
+                <p class="text-muted mb-0"><%= __('products.description') %></p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <% if (typeof totalProducts !== 'undefined') { %>
+                    <span class="badge bg-primary fs-6">
+                        <%= totalProducts %> <%= __('common.results') %>
+                    </span>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="filters py-4">
+    <div class="container">
+        <div class="row g-3">
+            <!-- Search -->
+            <div class="col-lg-4 col-md-6">
+                <div class="search-box">
+                    <div class="input-group">
+                        <input type="text" class="form-control" 
+                               placeholder="<%= __('products.search_placeholder') %>" 
+                               id="product-search"
+                               value="<%= typeof query !== 'undefined' ? query : '' %>">
+                        <button class="btn btn-outline-primary" type="button" id="search-btn">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="col-lg-3 col-md-6">
+                <select class="form-select" id="category-filter">
+                    <option value=""><%= __('products.filter_by_category') %></option>
+                    <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                        <% categories.forEach(category => { %>
+                            <option value="<%= category.id %>" 
+                                    <%= (typeof selectedCategory !== 'undefined' && selectedCategory === category.id) ? 'selected' : '' %>>
+                                <%= category.name %>
+                                <% if (category.productCount) { %>
+                                    (<%= category.productCount %>)
+                                <% } %>
+                            </option>
+                        <% }) %>
+                    <% } %>
+                </select>
+            </div>
+            
+            <!-- Price Range -->
+            <div class="col-lg-2 col-md-6">
+                <select class="form-select" id="price-filter">
+                    <option value="">All Prices</option>
+                    <option value="0-25">$0 - $25</option>
+                    <option value="25-50">$25 - $50</option>
+                    <option value="50-100">$50 - $100</option>
+                    <option value="100-500">$100 - $500</option>
+                    <option value="500+">$500+</option>
+                </select>
+            </div>
+            
+            <!-- Sort -->
+            <div class="col-lg-3 col-md-6">
+                <select class="form-select" id="sort-select">
+                    <option value="newest"><%= __('products.sort_options.newest') %></option>
+                    <option value="name_asc"><%= __('products.sort_options.name_asc') %></option>
+                    <option value="name_desc"><%= __('products.sort_options.name_desc') %></option>
+                    <option value="price_asc"><%= __('products.sort_options.price_asc') %></option>
+                    <option value="price_desc"><%= __('products.sort_options.price_desc') %></option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products Grid -->
+<div class="products-section py-4">
+    <div class="container">
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden"><%= __('common.loading') %></span>
+            </div>
+            <p class="text-muted mt-3"><%= __('common.loading') %></p>
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="row g-4" id="products-grid">
+            <% if (typeof products !== 'undefined' && products.length > 0) { %>
+                <% products.forEach(product => { %>
+                    <%- include('../partials/product-card', { product: product }) %>
+                <% }) %>
+            <% } else { %>
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-search display-1 text-muted"></i>
+                        <h3 class="mt-3"><%= __('products.no_products') %></h3>
+                        <p class="text-muted">Try adjusting your search or filter criteria</p>
+                        <a href="<%= getLocalizedUrl('/products') %>" class="btn btn-primary">
+                            <%= __('common.back') %>
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Pagination -->
+        <% if (typeof pagination !== 'undefined' && pagination.pages > 1) { %>
+            <nav aria-label="Products pagination" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    <!-- Previous Page -->
+                    <% if (pagination.page > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= pagination.page - 1 %>" 
+                               data-page="<%= pagination.page - 1 %>">
+                                <i class="bi bi-chevron-left"></i>
+                                <%= __('common.previous') %>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <!-- Page Numbers -->
+                    <% 
+                        const startPage = Math.max(1, pagination.page - 2);
+                        const endPage = Math.min(pagination.pages, pagination.page + 2);
+                    %>
+                    
+                    <% if (startPage > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" data-page="1">1</a>
+                        </li>
+                        <% if (startPage > 2) { %>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+                    <% } %>
+                    
+                    <% for(let i = startPage; i <= endPage; i++) { %>
+                        <li class="page-item <%= i === pagination.page ? 'active' : '' %>">
+                            <a class="page-link" href="?page=<%= i %>" data-page="<%= i %>">
+                                <%= i %>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <% if (endPage < pagination.pages) { %>
+                        <% if (endPage < pagination.pages - 1) { %>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <% } %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= pagination.pages %>" data-page="<%= pagination.pages %>">
+                                <%= pagination.pages %>
+                            </a>
+                        </li>
+                    <% } %>
+                    
+                    <!-- Next Page -->
+                    <% if (pagination.page < pagination.pages) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= pagination.page + 1 %>" 
+                               data-page="<%= pagination.page + 1 %>">
+                                <%= __('common.next') %>
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    <% } %>
+                </ul>
+                
+                <!-- Pagination Info -->
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <%= __('common.page') %> <%= pagination.page %> <%= __('common.of') %> <%= pagination.pages %>
+                        (<%= pagination.total %> <%= __('common.results') %>)
+                    </small>
+                </div>
+            </nav>
+        <% } %>
+    </div>
+</div>
+
+<!-- JavaScript for dynamic filtering -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('product-search');
+    const categoryFilter = document.getElementById('category-filter');
+    const priceFilter = document.getElementById('price-filter');
+    const sortSelect = document.getElementById('sort-select');
+    const productsGrid = document.getElementById('products-grid');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    
+    // Debounce function for search
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Filter products function
+    async function filterProducts() {
+        const params = new URLSearchParams({
+            q: searchInput.value,
+            category: categoryFilter.value,
+            price: priceFilter.value,
+            sort: sortSelect.value,
+            lang: '<%= locale %>'
+        });
+        
+        // Remove empty parameters
+        [...params.entries()].forEach(([key, value]) => {
+            if (!value) params.delete(key);
+        });
+        
+        // Show loading
+        loadingIndicator.style.display = 'block';
+        productsGrid.style.opacity = '0.5';
+        
+        try {
+            const response = await fetch(`/api/v1/products?${params}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update URL without page reload
+                const url = new URL(window.location);
+                url.search = params.toString();
+                window.history.replaceState({}, '', url);
+                
+                // Update products grid
+                updateProductsGrid(data.data.data);
+            }
+        } catch (error) {
+            console.error('Error filtering products:', error);
+        } finally {
+            loadingIndicator.style.display = 'none';
+            productsGrid.style.opacity = '1';
+        }
+    }
+    
+    // Update products grid HTML
+    function updateProductsGrid(products) {
+        if (products.length === 0) {
+            productsGrid.innerHTML = `
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-search display-1 text-muted"></i>
+                        <h3 class="mt-3"><%= __('products.no_products') %></h3>
+                        <p class="text-muted">Try adjusting your search or filter criteria</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // This would need to be implemented with proper templating
+        // For now, just reload the page
+        window.location.search = new URLSearchParams({
+            q: searchInput.value,
+            category: categoryFilter.value,
+            price: priceFilter.value,
+            sort: sortSelect.value
+        }).toString();
+    }
+    
+    // Event listeners
+    searchInput.addEventListener('input', debounce(filterProducts, 500));
+    categoryFilter.addEventListener('change', filterProducts);
+    priceFilter.addEventListener('change', filterProducts);
+    sortSelect.addEventListener('change', filterProducts);
+    
+    // Search button
+    document.getElementById('search-btn').addEventListener('click', filterProducts);
+    
+    // Enter key in search
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            filterProducts();
+        }
+    });
+});
+</script>

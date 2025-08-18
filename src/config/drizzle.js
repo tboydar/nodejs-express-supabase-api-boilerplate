@@ -1,6 +1,6 @@
 const { drizzle } = require('drizzle-orm/node-postgres');
 const { Pool } = require('pg');
-const * as schema from '../models/schema';
+const schema = require('../models/schema');
 require('dotenv').config();
 
 // Create PostgreSQL connection pool
